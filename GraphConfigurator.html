@@ -1,0 +1,317 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+ <HEAD>
+  <TITLE>Graph Configurator</TITLE>
+  <META NAME="Author" CONTENT="">
+  <META NAME="Keywords" CONTENT="">
+  <META NAME="Description" CONTENT="">
+  <link href="./Configurator/graphConfiguratorStyle.css" rel="stylesheet" type="text/css"/>
+	<script src="./GraphScript/canvas.js"></script>
+	<script src="./GraphScript/utility.js"></script>
+	<script src="./GraphScript/pie.js"></script>
+	<script src="./GraphScript/bar.js"></script>
+	<script src="./GraphScript/stackbar.js"></script>
+	<script src="./GraphScript/area.js"></script>
+	<script src="./GraphScript/legend.js"></script>
+	<script src="./GraphScript/axis.js"></script>
+	<script src="./Configurator/configuratorUtility.js"></script>
+  <script type="text/javascript">
+		//Configurator page elements
+		var chkGridLines=false;
+		var cboChartType="Bar";
+		var chart;
+		var rdoLegendOrientation=1;
+	
+		//Initializing the canvas and context
+		var objCan;
+
+		//Pie dataset
+		var pieData = [20,40,30,70,50];
+		var pieColor1 = ["black","green","orange","blue","red"];
+		var pieColor = ["#ECD078","#D95B43","#C02942","#542437","#53777A"];
+		var pieCoor = [200,250,100,20];
+		
+		//Axes
+		var xaxis = ["X-Axis", 10, 20, 30, 40, 50, 60, 70, 80,90,100,120];
+		var yaxis = ["Y-Axis", 20, 40, 60, 80, 100, 120];
+		//var yaxis = ["Y-Axis", 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+		
+		//Bar Graph
+		var barDat = [20,40,90,70,50,30];
+		var barCol = ["black","green","orange","blue","red","#53777A"];
+		var barCoor = [200, 350, 0, 20, 30];//[x,y,orientation,barWidth,barSpacing]
+		
+		//Stack Bar Graph
+		var stackDat = [[120,40,30,70,50], [30,50,120,90,20], [10,140,30,70,55], [115,10,130,78,155]];
+		var stackCoor = [250, 350, 0, 10, 35];//[x,y,orientation,barWidth,barGrpSpacing]
+		var stackCol = ["black","green","orange", "pink"]
+
+		//Area Chart Graph
+		var arDat = [[120,40,30,70,75], [30,50,120,90,20], [10,140,60,80,55]];
+		var arCoor = [250, 350, 0, 40];//[x,y,orientation,axis spacing]
+		var arCol = ["blue","green","orange"]
+
+		//Legend Params
+		var leArColName = [arCol, ["Oil", "Gas", "Nuclear"]];
+		//var leArCoor = [500,500,0,10,200,45];
+		var leArCoor = [100,200,1,10,65,150];
+
+		function onClick(e)
+		{
+			//alert("clicked");
+			var no = chart.findPiePiece(e)
+			alert(no + "::" + chart.givePiePieceColor(no));
+		}
+
+		function drawOnCanvas(grid, chartType)
+		{
+			objCan = new Canvas("canvas", "2d");
+			objCan.init();
+			objCan.drawBorder("green", 3);
+			objCan.getCanvas().addEventListener('mousemove', mouseMove, false);
+
+			objCan.clearCanvas();
+			if(grid==true)
+				drawGrid("canvas");
+
+			var chkX = document.getElementById("chkXAxis");
+			var chkY = document.getElementById("chkYAxis");
+
+			switch(chartType)
+			{
+				case "Bar":
+					chart = new SingleBar(objCan, barDat, barCol, barCoor, xaxis, yaxis);
+					chart.draw(false, chkX.checked,	chkY.checked);
+					break;
+				case "Pie":
+					chart = new Pie(objCan, pieData, pieColor1, pieCoor);
+					chart.draw()
+					chart.addAnimation("click", onClick);
+					break;
+				case "MultiBar":
+					chart = new StackBar(objCan, stackDat, stackCol, stackCoor, xaxis, yaxis);
+					chart.draw(false);
+					break;
+				case "Area":
+					chart = new AreaChart(objCan, arDat, arCol, arCoor, xaxis, yaxis);
+					chart.draw(chkX.checked, chkY.checked);
+					chart = new Legend(objCan, leArColName, leArCoor, "event");
+					chart.draw(false);
+					break;
+				default:
+					chart = new SingleBar(objCan, barDat, barCol, barCoor, xaxis, yaxis);
+					chart.draw(false, chkX.checked,	chkY.checked);
+					break;
+			}
+		}
+
+		function paintPage(chartType)
+		{
+			var barBoxData = document.getElementById("bar_box_data");
+			var axisParams = document.getElementById("axis_params");
+
+			var pieBoxPos = document.getElementById("pie_box_position");
+			var legendParams = document.getElementById("legend_params");
+
+			switch(chartType)
+			{
+				case "Bar":
+					barBoxData.style.display = "block";
+					axisParams.style.display = "block";
+					pieBoxPos.style.display = "none";
+					legendParams.style.display = "block";
+					break;
+				case "Pie":
+					barBoxData.style.display = "none";
+					axisParams.style.display = "none";
+					pieBoxPos.style.display = "block";
+					legendParams.style.display = "block";
+					break;
+				case "MultiBar":
+					axisParams.style.display = "block";
+					pieBoxPos.style.display = "none";
+					legendParams.style.display = "block";
+					break;
+				case "Area":
+					barBoxData.style.display = "none";
+					axisParams.style.display = "block";
+					pieBoxPos.style.display = "none";
+					legendParams.style.display = "block";
+					break;
+				default:
+					barBoxData.style.display = "none";
+					axisParams.style.display = "block";
+					pieBoxPos.style.display = "none";
+					legendParams.style.display = "block";
+					break;
+			}
+		}
+
+		function reDraw()
+		{
+			var chkX = document.getElementById("chkXAxis");
+			var chkY = document.getElementById("chkYAxis");
+
+			switch(cboChartType)
+			{
+				case "Bar":
+					var newCoor = new Array(parseInt((document.getElementById("txtXAxis")).value),
+											parseInt((document.getElementById("txtYAxis")).value),
+											0,
+											parseInt((document.getElementById("txtBarWidth")).value),
+											parseInt((document.getElementById("txtBarSpacing")).value));
+					objCan.clearCanvas();
+					chart = new SingleBar(objCan, barDat, barCol, newCoor, xaxis, yaxis);
+					chart.draw(false, chkX.checked,	chkY.checked);
+					break;
+				case "Pie":
+					var newCoor = new Array(parseInt((document.getElementById("txt_x")).value),
+											parseInt((document.getElementById("txt_y")).value),
+											parseInt((document.getElementById("txt_radius")).value),
+											parseInt((document.getElementById("txt_ease_out")).value));
+					objCan.clearCanvas();
+					chart = new Pie(objCan, pieData, pieColor1, newCoor);
+					chart.draw();
+					chart.addAnimation("click", onClick);
+					break;
+				case "MultiBar":
+					break;
+				case "Area":
+					var newCoor = new Array(parseInt((document.getElementById("txtXAxis")).value),
+											parseInt((document.getElementById("txtYAxis")).value),
+											0,
+											parseInt((document.getElementById("txtXAxisSpacing")).value));
+					objCan.clearCanvas();
+					chart = new AreaChart(objCan, arDat, arCol, newCoor, xaxis, yaxis);
+					chart.draw(chkX.checked, chkY.checked);
+
+					var newLeCoor = new Array(parseInt((document.getElementById("txtLegXAxis")).value),
+											parseInt((document.getElementById("txtLegYAxis")).value),
+											rdoLegendOrientation,
+											parseInt((document.getElementById("txtLegSpacing")).value),									parseInt((document.getElementById("txtLegWidth")).value),
+											parseInt((document.getElementById("txtLegHeight")).value));
+					chart = new Legend(objCan, leArColName, newLeCoor, "event");
+					chart.draw(false);
+					break;
+				default:
+					break;
+			}
+		}
+
+		function refresh()
+		{
+			drawOnCanvas(chkGridLines, cboChartType);
+			paintPage(cboChartType);
+		}
+
+		function DrawGrid(chkBox)
+		{
+			if(chkBox.checked==true)
+				chkGridLines=true;
+			else
+				chkGridLines=false;
+			refresh();
+		}
+
+		function DrawSelectedChart(cboChart)
+		{
+			cboChartType = cboChart.value;
+			refresh();
+		}
+
+		function LegendOrientation(rdoLegend)
+		{
+			if(rdoLegend.checked==true)
+				if(rdoLegend.value=="legX")
+					rdoLegendOrientation = 0;
+				if(rdoLegend.value=="legY")
+					rdoLegendOrientation = 1;
+		}
+
+ </script>
+ </HEAD>
+ <body onload="refresh()">
+	<div id="page">
+		<div id="left">
+			<div id="box_chart_type">
+				<div class="label" style="width:35%">Chart Type:</div>
+				<div class="control">
+					<select id="cbo_chart_type" onchange="DrawSelectedChart(this)">
+						<option value="Bar">Bar Chart</option>
+						<option value="Pie">Pie Chart</option>
+						<option value="MultiBar">MultiBar Chart</option>
+						<option value="Area">Stacked Area</option>
+					</select>		
+				</div>
+			</div>
+			<div id="box_chart_type">
+				<div class="label" style="width:45%">Show Grid Lines: </div>
+				<div class="control" style="width:10%;margin-top:5px"><input type="checkbox" id="grid" onClick="DrawGrid(this)"></div>
+			</div>
+			<div id="pie_box_position" style="display:none;">
+				<div class="label">	Center X: </div>
+				<div class="control"><input type="text" id="txt_x" value="100"/></div>
+				<div class="label"> Center Y: </div>
+				<div class="control"><input type="text" id="txt_y" value="100"/></div>
+				<div class="label"> Radius: </div>
+				<div class="control"><input type="text" id="txt_radius" value="50"/></div>
+				<div class="label">	Ease Out: </div>
+				<div class="control"><input type="text" id="txt_ease_out" value="20"/></div>
+			</div>
+
+			<div id="axis_params" style="display:none;">
+				<div class="label">	Axis X: </div>
+				<div class="control"><input type="text" id="txtXAxis" value="100"/></div>
+				<div class="label"> Axis Y: </div>
+				<div class="control"><input type="text" id="txtYAxis" value="250"/></div>
+				<div class="label"> X Spacing: </div>
+				<div class="control"><input type="text" id="txtXAxisSpacing" value="20"/></div>
+				<div class="label"> Y Spacing: </div>
+				<div class="control"><input type="text" id="txtYAxisSpacing" value="10" readonly="readonly"/></div>
+				<div class="label">X-Axis: </div>
+				<div class="bar_axis" ><input type="checkbox" id="chkXAxis" checked="checked"/></div>
+				<div class="label" >Y-Axis: </div>
+				<div class="bar_axis" ><input type="checkbox" id="chkYAxis" checked="checked"/></div>
+			</div>
+
+			<div id="bar_box_data" style="display:none;">
+				<div class="label" style="width:35%;">Bar Width: </div>
+				<div class="control"><input type="text" id="txtBarWidth" value="20"/></div>
+				<div class="label" style="width:35%;">Bar Spacing: </div>
+				<div class="control"><input type="text" id="txtBarSpacing" value="30"/></div>
+			</div>
+			
+			<div id="legend_params" style="display:none;">
+				<div class="label">	Legend X: </div>
+				<div class="control"><input type="text" id="txtLegXAxis" value="100"/></div>
+				<div class="label"> Legend Y: </div>
+				<div class="control"><input type="text" id="txtLegYAxis" value="250"/></div>
+				<div class="label"> Spacing: </div>
+				<div class="control"><input type="text" id="txtLegSpacing" value="10"/></div>
+				<div class="label"> Width: </div>
+				<div class="control"><input type="text" id="txtLegWidth" value="100"/></div>
+				<div class="label"> Height: </div>
+				<div class="control"><input type="text" id="txtLegHeight" value="50"/></div>
+				<div class="label"> Along X: </div>
+				<div class="bar_axis" ><input type="radio" name="grpLeg" id="radLegX" value="legX" checked="checked" onClick="LegendOrientation(this)"/></div>
+				<div class="label"> Along Y: </div>
+				<div class="bar_axis"> <input type="radio" name="grpLeg" id="radLegY" value="legY" onClick="LegendOrientation(this)"/></div>
+			</div>
+
+			<div id="action" style="display:block;">
+				<div class="button"><button type="button" id="btnReset" onclick="resetPage()">Reset</button></div>
+				<div class="button"><button type="button" id="btnAdd" onclick="memorize()">Add</button></div>
+				<div class="button"><button type="button" id="btnRefresh" onclick="reDraw()">Redraw</button></div>
+			</div>
+		</div>
+		<div id="right">
+			<div id="box_canvas">
+				<div id="inner_canvas" style="display:block;">
+					<canvas id="canvas" width="700" height="500" border="1"></canvas>
+				</div>
+			</div>
+		</div>
+	</div>
+ </BODY>
+</HTML>
+
